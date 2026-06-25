@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crea-sesame-lib"
+version = "0.1.0"
+description = "High-level abstraction layer for CREA Sesame robot control"
+requires-python = ">=3.9"
+dependencies = [
+    "crea-sesame-companion @ file:///${PROJECT_ROOT}/../CREA-sesame-companion"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sesame_lib*"]
