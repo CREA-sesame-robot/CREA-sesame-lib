@@ -13,4 +13,4 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["sesame_lib*"]
+include = ["crea_sesame_lib*"]

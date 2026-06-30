@@ -1,53 +1,80 @@
 # Import the low-level functions from the companion library
-from sesame_companion import SesameRobotController
-import subprocess
-import re
+import time
+import requests
+from . import connection
 
-class SesameCommander:
-    def __init__(self, robot_ip: str = None, mock: bool = False):
-        if mock:
-            self.controller = SesameRobotController("mock")
-        else:
-            ip = robot_ip or self.get_robot_ip()
-            print(f"[INFO] Connecting to robot at {ip}")
-            self.controller = SesameRobotController(ip)
+AVAILABLE_EMOTES = [
+    "rest", "swim", "dance", "wave", "point", "stand", 
+    "cute", "pushup", "freaky", "bow", "worm", "shake", "shrug", 
+    "dead", "crab", "idle", "stand"
+]
+VALID_DIRECTIONS = {"forward", "backward", "left", "right"}
 
-    def get_robot_ip(timeout: float = 5.0) -> str:
-        """
-        Discovers the robot's IP address by running nslookup.
-        """
-        try:
-            result = subprocess.run(
-                ["nslookup", "www.msftconnecttest.com"],
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("No se pudo conectar al robot. Revisa que estes conectado al WIFI de tu robot :)")
-        except FileNotFoundError:
-            raise RuntimeError("el comando nslookup no pudo ser realizado")
+def _send_go(direction: str):
+    """Internal: sends the go=<direction> command directly to the robot."""
+    controller = connection.get_controller()
 
-        if result.returncode != 0:
-            raise RuntimeError(f"nslookup falló de una manera inesperada: {result.stderr.strip()}")
+    if controller.is_mock:
+        print(f"   TX (mock): go={direction}")
+        return
 
-        # Parse the "Address:" lines, skip the DNS server's own address (first one)
-        addresses = re.findall(r"Address:\s*([\d.]+)", result.stdout)
+    url = f"{controller.base_url}/cmd"
+    response = requests.get(url, params={"go": direction}, timeout=5)
+    print(f"   TX: go={direction} -> {response.status_code}")
+    return response
 
-        if len(addresses) < 2:
-            raise RuntimeError(
-                f"No se pudo encontrar la dirección IP del robot:\n{result.stdout}"
-            )
 
-        # First match is typically the DNS server, second is the resolved redirect IP
-        robot_ip = addresses[1]
-        print (f'Addresses completo: {addresses}')
-        print (f'Supuesto Robot IP {robot_ip}')
-        return robot_ip
+def _send_stop():
+    """Internal: sends the stop=1 command directly to the robot."""
+    controller = connection.get_controller()
 
-    def point_move_stop(self, direction: float, distance: float):
-        """Point to a direction, move a distance, then stop — one call."""
-        # set_direction(self.robot, direction)
-        # move(self.robot, distance)
-        # stop(self.robot)
-        pass
+    if controller.is_mock:
+        print("   TX (mock): stop=1")
+        return
+
+    url = f"{controller.base_url}/cmd"
+    response = requests.get(url, params={"stop": 1}, timeout=5)
+    print(f"   TX: stop=1 -> {response.status_code}")
+    return response
+
+
+def mover(direction: str, duration: float):
+    """
+    Mueve el robot en cualquier dirección por `duracion`segundos, luego se detiene.
+    Direcciones: "forward", "backward", "left", "right"
+    """
+    direction = direction.lower()
+    if direction not in VALID_DIRECTIONS:
+        raise ValueError(f"Dirección invalida '{direction}'. Tiene que ser alguna entre: {VALID_DIRECTIONS}")
+
+    _send_go(direction)
+    time.sleep(duration)
+    _send_stop()
+
+def mover_adelante(duracion:int):
+    main_controller = connection.get_controller()
+    _send_go("forward")
+    time.sleep(duracion)
+    _send_stop
+def girar_derecha(duracion:int):
+    main_controller = connection.get_controller()
+    _send_go("right")
+    time.sleep(duracion)
+    _send_stop
+def girar_izquierda(duracion:int):
+    main_controller = connection.get_controller()
+    _send_go("left")
+    time.sleep(duracion)
+    _send_stop
+def mover_atras(duracion:int):
+    main_controller = connection.get_controller()
+    _send_go("backward")
+    time.sleep(duracion)
+    _send_stop
+
+def detener():
+    """
+    Detiene cualquier acción del robot
+    """
+    _send_stop()
+
