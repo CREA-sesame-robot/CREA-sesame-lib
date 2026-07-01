@@ -37,6 +37,21 @@ def _send_stop():
     print(f"   TX: stop=1 -> {response.status_code}")
     return response
 
+def _calcular_duracion(angulo: float) -> float:
+    """
+    Calcula la duración (en segundos, como entero) necesaria para girar
+    el robot un ángulo dado, asumiendo que gira 360° en 35 segundos.
+    
+    angulo: ángulo deseado en grados (0-360). 0° = frente del robot.
+    """
+    TIEMPO_VUELTA_COMPLETA = 22
+    
+    # Normalizar el ángulo al rango [0, 360)
+    angulo = angulo % 360
+    
+    duracion = (angulo / 360) * TIEMPO_VUELTA_COMPLETA
+    
+    return round(duracion,3)
 
 def mover(direction: str, duration: float):
     """
@@ -51,26 +66,27 @@ def mover(direction: str, duration: float):
     time.sleep(duration)
     _send_stop()
 
-def mover_adelante(duracion:int):
+def mover_adelante(duracion:float):
     main_controller = connection.get_controller()
     _send_go("forward")
     time.sleep(duracion)
-    _send_stop
-def girar_derecha(duracion:int):
-    main_controller = connection.get_controller()
+    _send_stop()
+def girar_derecha(duracion:float):
+    #main_controller = connection.get_controller()
     _send_go("right")
     time.sleep(duracion)
-    _send_stop
-def girar_izquierda(duracion:int):
-    main_controller = connection.get_controller()
+
+    _send_stop()
+def girar_izquierda(duracion:float):
+    #main_controller = connection.get_controller()
     _send_go("left")
     time.sleep(duracion)
-    _send_stop
-def mover_atras(duracion:int):
+    _send_stop()
+def mover_atras(duracion:float):
     main_controller = connection.get_controller()
     _send_go("backward")
     time.sleep(duracion)
-    _send_stop
+    _send_stop()
 
 def detener():
     """
@@ -78,3 +94,20 @@ def detener():
     """
     _send_stop()
 
+def girar_derecha_angulo(angulo: int):
+    """
+    Gira a la derecha hasta estar posicionado en el ángulo enviado en el
+    parámetro `angulo`. Asume que inicia mirando al ángulo 0°
+    """
+
+    tiempo = _calcular_duracion(angulo)
+    print(tiempo)
+    girar_derecha(tiempo)
+
+def girar_izquierda_angulo(angulo: int):
+    """
+    Gira a la derecha hasta estar posicionado en el ángulo enviado en el
+    parámetro `angulo`. Asume que inicia mirando al ángulo 0°
+    """
+    tiempo = _calcular_duracion(angulo)
+    girar_izquierda(tiempo)
