@@ -1,9 +1,20 @@
 from sesame_companion import *
 import subprocess
 import re
+import threading
 
 #Singleton para poder reducir la dependencia a la clase de sesame_companion
 _controller: SesameRobotController | None = None
+_stop_event = threading.Event()
+
+def _reset_stop():
+    """Clears the stop signal — called before starting any movement sequence."""
+    _stop_event.clear()
+
+def get_stop_event() -> threading.Event:
+    """Internal helper so other modules can check/wait on the stop signal."""
+    return _stop_event
+
 
 def obtener_ip_robot(timeout: float = 5.0) -> str:
     """
@@ -50,7 +61,7 @@ def conectar_robot(robot_ip: str = None, mock: bool = False) -> None:
         _controller = SesameRobotController("mock")
         print("[INFO] Connected in MOCK mode")
         return
-
+    _reset_stop()
     ip = robot_ip or obtener_ip_robot()
     _controller = SesameRobotController(ip)
     print("[INFO]¡Conexión con el robot exitosa! B-)")
